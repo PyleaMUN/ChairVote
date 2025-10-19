@@ -22,6 +22,7 @@
         .btn { background-color: #00b4a0; color: white; font-size: 1em; padding: 0.8em 1.5em; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
         .btn:hover { background-color: #00897b; }
         .btn.primary { background-color: #00b4a0; }
+        .btn.danger { background-color: #d32f2f; }
         
         /* Specific element styles */
         select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; background-color: white; font-size: 1em; width: 90%; box-sizing: border-box; }
@@ -127,6 +128,8 @@
                 </div>
                 <div class="button-group">
                     <button class="btn primary" onclick="renderTally()">Refresh Results</button>
+                    <!-- New Clear Data Button -->
+                    <button class="btn danger" id="clear-data-btn">Clear All Votes (Admin)</button>
                 </div>
             </div>
         </div>
@@ -136,14 +139,16 @@
     <!-- Modular Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
         // ====================================================================
         // --- 1. CONFIGURATION BLOCK ---
         // ====================================================================
         
-        // !!! IMPORTANT: SET YOUR ADMIN PASSWORD HERE !!!
-        const ADMIN_PASSWORD = "vote1026"; // <<< ADMIN PASSWORD SET
+        const ADMIN_PASSWORD = "vote1026"; 
+        
+        // !!! SUPER ADMIN PASSWORD UPDATED !!!
+        const SUPER_ADMIN_PASSWORD = "president-panos"; 
         
         // Your web app's Firebase configuration (provided by user)
         const firebaseConfig = {
@@ -203,17 +208,14 @@
         }
 
         function checkInitialView() {
-            // Check if the URL has ?admin to prompt for password
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') !== null) {
                 showScreen('password-screen');
                 return;
             }
 
-            // Otherwise, start the voter flow
             const storedVoter = sessionStorage.getItem(VOTER_SESSION_KEY);
             if (storedVoter) {
-                // If session exists, try to enter immediately
                 document.getElementById('voter-select').value = storedVoter;
                 handleEnter(); 
             } else {
@@ -227,14 +229,13 @@
             const statusEl = document.getElementById('password-status');
 
             if (enteredPassword === ADMIN_PASSWORD) {
-                renderTally(); // Fetch and display results
+                renderTally(); 
                 showScreen('admin-screen');
             } else {
                 statusEl.textContent = "❌ Incorrect Password.";
             }
         });
         
-
         // --- Voter Entry Logic ---
         function populateVoterSelect() {
             const selectEl = document.getElementById('voter-select');
@@ -259,7 +260,6 @@
             authStatusEl.textContent = "Checking vote status...";
 
             try {
-                // Check if the voter node exists in the database
                 const voterRef = ref(database, `${VOTES_NODE}/${voterName}`);
                 const snapshot = await get(voterRef);
                 
@@ -268,7 +268,6 @@
                     return;
                 }
 
-                // Voter has not voted. Store voter's name and transition.
                 sessionStorage.setItem(VOTER_SESSION_KEY, voterName);
                 showScreen('voting-screen');
                 document.getElementById('voter-greeting').textContent = `Welcome, ${voterName}. Please cast your votes for the Student Officers below.`;
@@ -284,7 +283,6 @@
         // ====================================================================
 
         function createDropdown(options, namePrefix, candidateIndex, initialText) {
-            // ... (Dropdown creation logic remains the same)
             const select = document.createElement('select');
             select.name = `${namePrefix}_${candidateIndex}`;
             select.required = true;
@@ -366,7 +364,7 @@
 
             try {
                 const voterRef = ref(database, `${VOTES_NODE}/${voterName}`);
-                await set(voterRef, voteData); // Security rule: This will fail if the node exists!
+                await set(voterRef, voteData); 
 
                 sessionStorage.removeItem(VOTER_SESSION_KEY);
                 
@@ -382,8 +380,34 @@
         }
 
         // ====================================================================
-        // --- 4. ADMIN TALLY LOGIC (Viewing Results) ---
+        // --- 4. ADMIN TALLY & CLEAR DATA LOGIC ---
         // ====================================================================
+
+        async function handleClearData() {
+            const tallyStatusEl = document.getElementById('tally-status');
+            
+            const confirmClear = confirm("WARNING: This will permanently delete ALL recorded votes. Proceed?");
+            if (!confirmClear) return;
+            
+            const enteredPassword = prompt("Enter the SUPER ADMIN PASSWORD to confirm data deletion:");
+            if (enteredPassword !== SUPER_ADMIN_PASSWORD) {
+                tallyStatusEl.textContent = "❌ Incorrect password. Data deletion cancelled.";
+                return;
+            }
+            
+            tallyStatusEl.textContent = "Deleting all votes, please wait...";
+
+            try {
+                const votesRootRef = ref(database, VOTES_NODE);
+                await remove(votesRootRef);
+                
+                tallyStatusEl.innerHTML = "🗑️ **Success!** All votes have been cleared from the database.";
+                document.getElementById('tally-summary').innerHTML = '';
+            } catch (error) {
+                tallyStatusEl.textContent = "❌ Failed to clear votes. Check the Firebase Console for permissions.";
+                console.error("Data Deletion Error:", error);
+            }
+        }
 
         async function renderTally() {
             const tallyStatusEl = document.getElementById('tally-status');
@@ -405,14 +429,14 @@
                 
                 // Initialize Tally Structure: Committee -> Post -> Candidate -> Count
                 const results = {}; 
-                const candidateSet = new Set(CANDIDATES); // Use a set for quick lookup
+                const candidateSet = new Set(CANDIDATES); 
                 
                 // 1. Process all submitted votes
                 for (const voterName in allVotes) {
                     const voterVotes = allVotes[voterName].votes;
                     
                     for (const candidateName in voterVotes) {
-                        if (!candidateSet.has(candidateName)) continue; // Skip if candidate is unknown/malformed
+                        if (!candidateSet.has(candidateName)) continue; 
                         
                         const { committee, post } = voterVotes[candidateName];
 
@@ -480,8 +504,8 @@
             populateVoterSelect();
             document.getElementById('enter-btn').addEventListener('click', handleEnter);
             document.getElementById('voting-form').addEventListener('submit', handleSubmit);
+            document.getElementById('clear-data-btn').addEventListener('click', handleClearData);
             
-            // Check the URL query string to decide whether to show the voter or admin login
             checkInitialView();
         });
 
