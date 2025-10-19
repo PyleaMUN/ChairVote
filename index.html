@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PyleaMUN Student Officer Vote</title>
+    <title>PyleaMUN Student Officer Vote & Tally</title>
     <style>
         /* Base styles from index.html */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #E8EAE6; color: #333; }
@@ -23,75 +23,63 @@
         .btn:hover { background-color: #00897b; }
         .btn.primary { background-color: #00b4a0; }
         
-        /* Voting page specific styles */
+        /* Specific element styles */
+        select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; background-color: white; font-size: 1em; width: 90%; box-sizing: border-box; }
+        .voter-auth { display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 20px; }
+        .alert-box { background-color: #ffeb3b; color: #333; padding: 10px 20px; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        #status { text-align: center; font-weight: bold; color: #004d40; margin-top: 1em; min-height: 24px; font-size: 1.1em; }
+        
+        /* Voting Form Layout */
         #candidate-list { list-style: none; padding: 0; }
         #candidate-list li { 
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr; /* 3 columns: Name, Committee, Post */
+            grid-template-columns: 1fr 1fr 1fr; /* Name, Committee, Post */
             align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #cceeff;
         }
-        #candidate-list li:last-child { border-bottom: none; }
-        
-        .grid-header {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            font-weight: bold;
-            padding: 10px 0;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #005b63;
-        }
+        .grid-header { display: grid; grid-template-columns: 1fr 1fr 1fr; font-weight: bold; padding: 10px 0; margin-bottom: 10px; border-bottom: 2px solid #005b63; }
         .grid-header div { text-align: center; }
         .grid-header div:first-child { text-align: left; padding-left: 0; }
 
-        select {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background-color: white;
-            font-size: 1em;
-            width: 90%;
-            box-sizing: border-box;
-        }
+        /* Tally Specific Styles */
+        .tally-summary { margin-top: 20px; text-align: left; }
+        .tally-committee { margin-bottom: 30px; padding: 15px; background-color: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .tally-committee h3 { margin-top: 0; color: #00796b; border-bottom: 1px solid #b2dfdb; padding-bottom: 5px; }
+        .tally-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .tally-item { padding: 5px 0; border-bottom: 1px dotted #ccc; display: flex; justify-content: space-between; }
+        .tally-item:last-child { border-bottom: none; }
+        .candidate-name { font-weight: 600; color: #333; }
+        .vote-count { font-weight: 700; color: #00b4a0; font-size: 1.1em; }
         
-        .voter-auth {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-        }
-        
-        .alert-box {
-            background-color: #ffeb3b;
-            color: #333;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #status { 
-            text-align: center; font-weight: bold; color: #004d40; margin-top: 1em; min-height: 24px; 
-            font-size: 1.1em;
-        }
     </style>
 </head>
 <body>
+    <!-- Header shared across all views -->
+    <div class="letterhead">
+        <div class="address"><strong>4 Isminis Str.</strong><br>Pylaia, Thessaloniki - 55535</div>
+        <div class="logo-container"><img src="https://pyleamun.github.io/interview-guide/pyleaMUNfinallogo_transparent.png" alt="PyleaMUN Logo" class="logo"></div>
+        <div class="contact">
+            <div>📞 +30 2310329199</div>
+            <div>📧 <a href="mailto:pyleamun@gmail.com">pyleamun@gmail.com</a></div>
+            <div>🌐 <a href="https://pyleamun.github.io/pyleamun2026/" target="_blank">pyleamun.github.io/pyleamun2026</a></div>
+        </div>
+    </div>
 
-    <!-- Voter Authentication Screen -->
-    <div id="auth-screen">
-        <div class="letterhead">
-            <div class="address"><strong>4 Isminis Str.</strong><br>Pylaia, Thessaloniki - 55535</div>
-            <div class="logo-container"><img src="https://pyleamun.github.io/interview-guide/pyleaMUNfinallogo_transparent.png" alt="PyleaMUN Logo" class="logo"></div>
-            <div class="contact">
-                <div>📞 +30 2310329199</div>
-                <div>📧 <a href="mailto:pyleamun@gmail.com">pyleamun@gmail.com</a></div>
-                <div>🌐 <a href="https://pyleamun.github.io/pyleamun2026/" target="_blank">pyleamun.github.io/pyleamun2026</a></div>
+    <main>
+        <!-- 0. Initial Password Screen (Hidden by default, shown by query param) -->
+        <div id="password-screen" class="hidden">
+            <h1 style="color: #d32f2f;">🔐 Admin Access Required</h1>
+            <div class="container voter-auth">
+                <h2>PyleaMUN Tally</h2>
+                <input type="password" id="admin-password" placeholder="Enter Admin Password" style="padding: 10px; width: 250px; border-radius: 8px; border: 1px solid #ccc;">
+                <button id="password-btn" class="btn secondary">View Results</button>
+                <div id="password-status" style="color: #d32f2f; margin-top: 10px;"></div>
             </div>
         </div>
-        <main>
+
+        <!-- 1. Voter Authentication Screen -->
+        <div id="auth-screen" class="hidden">
             <h1>🗳️ Student Officer Voting</h1>
             <div class="container voter-auth">
                 <h2>Voter Identification</h2>
@@ -103,21 +91,10 @@
                 <button id="enter-btn" class="btn primary" disabled>Enter Voting Booth</button>
                 <div id="auth-status" style="color: #d32f2f;"></div>
             </div>
-        </main>
-    </div>
-
-    <!-- Main Voting Screen -->
-    <div id="voting-screen" class="hidden">
-        <div class="letterhead">
-            <div class="address"><strong>4 Isminis Str.</strong><br>Pylaia, Thessaloniki - 55535</div>
-            <div class="logo-container"><img src="https://pyleamun.github.io/interview-guide/pyleaMUNfinallogo_transparent.png" alt="PyleaMUN Logo" class="logo"></div>
-            <div class="contact">
-                <div>📞 +30 2310329199</div>
-                <div>📧 <a href="mailto:pyleamun@gmail.com">pyleamun@gmail.com</a></div>
-                <div>🌐 <a href="https://pyleamun.github.io/pyleamun2026/" target="_blank">pyleamun.github.io/pyleamun2026</a></div>
-            </div>
         </div>
-        <main>
+
+        <!-- 2. Main Voting Screen -->
+        <div id="voting-screen" class="hidden">
             <h1>🗳️ PyleaMUN Student Officer Vote</h1>
             <div class="container">
                 <p id="voter-greeting" style="text-align: center; font-size: 1.2em; color: #00796b;"></p>
@@ -136,18 +113,39 @@
                         <button type="submit" class="btn primary">Submit Vote</button>
                     </div>
                 </form>
-
                 <div id="status"></div>
             </div>
-        </main>
-    </div>
+        </div>
+
+        <!-- 3. Admin Tally Screen -->
+        <div id="admin-screen" class="hidden">
+            <h1>📊 Student Officer Vote Tally</h1>
+            <div class="container">
+                <p id="tally-status" style="text-align: center; font-size: 1.2em; color: #00796b;"></p>
+                <div id="tally-summary">
+                    <!-- Results will be displayed here -->
+                </div>
+                <div class="button-group">
+                    <button class="btn primary" onclick="renderTally()">Refresh Results</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
 
     <!-- Modular Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, get, set, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        // Your web app's Firebase configuration
+        // ====================================================================
+        // --- 1. CONFIGURATION BLOCK ---
+        // ====================================================================
+        
+        // !!! IMPORTANT: SET YOUR ADMIN PASSWORD HERE !!!
+        const ADMIN_PASSWORD = "vote1026"; // <<< ADMIN PASSWORD SET
+        
+        // Your web app's Firebase configuration (provided by user)
         const firebaseConfig = {
             apiKey: "AIzaSyBo2GRHsqz6LwvISHMiNa-eMaThNb1xwCs",
             authDomain: "pyleamun-vote.firebaseapp.com",
@@ -156,17 +154,16 @@
             messagingSenderId: "251868969983",
             appId: "1:251868969983:web:931ba1d87843eab7ccc5ca"
         };
+        
+        // Database Constants
+        const VOTES_NODE = 'officer_votes';
+        const VOTER_SESSION_KEY = 'pyleamun-voter-id';
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        
-        // Reference to store the votes: voterName -> {timestamp, votes: {candidate: {committee, post}, ...}}
-        const VOTES_NODE = 'officer_votes';
-        const VOTER_SESSION_KEY = 'pyleamun-voter-id';
 
-
-        // --- DATA ---
+        // --- DATA ARRAYS (Must be Finalized) ---
         const CANDIDATES = [
             "Aidoni Rafaela", "Angelaki-Mertzemeki Sofia", "Anyparidou Despoina", 
             "Asimakopoulou Ariadni", "Belliou Ioanna", "Bletsas Evangelos", 
@@ -194,8 +191,51 @@
         const POSTS = ["Chair", "Co-Chair"];
         
 
-        // --- AUTHENTICATION FUNCTIONS ---
+        // ====================================================================
+        // --- 2. AUTHENTICATION & VIEW MANAGEMENT ---
+        // ====================================================================
 
+        function showScreen(screenId) {
+            document.querySelectorAll('#auth-screen, #voting-screen, #admin-screen, #password-screen').forEach(el => {
+                el.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function checkInitialView() {
+            // Check if the URL has ?admin to prompt for password
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') !== null) {
+                showScreen('password-screen');
+                return;
+            }
+
+            // Otherwise, start the voter flow
+            const storedVoter = sessionStorage.getItem(VOTER_SESSION_KEY);
+            if (storedVoter) {
+                // If session exists, try to enter immediately
+                document.getElementById('voter-select').value = storedVoter;
+                handleEnter(); 
+            } else {
+                showScreen('auth-screen');
+            }
+        }
+        
+        // --- Admin Password Logic ---
+        document.getElementById('password-btn').addEventListener('click', () => {
+            const enteredPassword = document.getElementById('admin-password').value;
+            const statusEl = document.getElementById('password-status');
+
+            if (enteredPassword === ADMIN_PASSWORD) {
+                renderTally(); // Fetch and display results
+                showScreen('admin-screen');
+            } else {
+                statusEl.textContent = "❌ Incorrect Password.";
+            }
+        });
+        
+
+        // --- Voter Entry Logic ---
         function populateVoterSelect() {
             const selectEl = document.getElementById('voter-select');
             VOTERS.forEach(voter => {
@@ -214,12 +254,9 @@
             const voterName = document.getElementById('voter-select').value;
             const authStatusEl = document.getElementById('auth-status');
 
-            if (!voterName) {
-                authStatusEl.textContent = "Please select your name to continue.";
-                return;
-            }
+            if (!voterName) { return; }
             
-            authStatusEl.textContent = "Checking vote status in PyleaMUN Vote database...";
+            authStatusEl.textContent = "Checking vote status...";
 
             try {
                 // Check if the voter node exists in the database
@@ -227,27 +264,27 @@
                 const snapshot = await get(voterRef);
                 
                 if (snapshot.exists()) {
-                    // Voter found in database, meaning they have already voted.
                     authStatusEl.textContent = `❌ Error: The user "${voterName}" has already cast a vote on ${new Date(snapshot.val().timestamp).toLocaleString()}.`;
                     return;
                 }
 
                 // Voter has not voted. Store voter's name and transition.
                 sessionStorage.setItem(VOTER_SESSION_KEY, voterName);
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('voting-screen').classList.remove('hidden');
+                showScreen('voting-screen');
                 document.getElementById('voter-greeting').textContent = `Welcome, ${voterName}. Please cast your votes for the Student Officers below.`;
-
                 populateCandidateList();
             } catch (error) {
-                authStatusEl.textContent = `❌ Error connecting to the database. Please try again. (Check console for details)`;
+                authStatusEl.textContent = `❌ Error connecting to the database. Please try again.`;
                 console.error("Firebase Auth Check Error:", error);
             }
         }
 
-        // --- VOTING FORM FUNCTIONS ---
-        
+        // ====================================================================
+        // --- 3. VOTING FORM LOGIC (Submission) ---
+        // ====================================================================
+
         function createDropdown(options, namePrefix, candidateIndex, initialText) {
+            // ... (Dropdown creation logic remains the same)
             const select = document.createElement('select');
             select.name = `${namePrefix}_${candidateIndex}`;
             select.required = true;
@@ -270,23 +307,20 @@
 
         function populateCandidateList() {
             const listEl = document.getElementById('candidate-list');
-            listEl.innerHTML = ''; // Clear existing content
+            listEl.innerHTML = ''; 
 
             CANDIDATES.sort().forEach((candidate, index) => {
                 const li = document.createElement('li');
                 
-                // 1. Candidate Name
                 const nameDiv = document.createElement('div');
                 nameDiv.textContent = candidate;
                 li.appendChild(nameDiv);
 
-                // 2. Proposed Committee Dropdown
                 const committeeDiv = document.createElement('div');
                 const committeeSelect = createDropdown(COMMITTEES, 'committee', index, 'Select Committee');
                 committeeDiv.appendChild(committeeSelect);
                 li.appendChild(committeeDiv);
 
-                // 3. Proposed Post Dropdown
                 const postDiv = document.createElement('div');
                 const postSelect = createDropdown(POSTS, 'post', index, 'Select Post');
                 postDiv.appendChild(postSelect);
@@ -301,21 +335,10 @@
             const statusEl = document.getElementById('status');
             const voterName = sessionStorage.getItem(VOTER_SESSION_KEY);
 
-            if (!voterName) {
-                statusEl.textContent = "❌ Error: Voter not identified. Please refresh and re-enter.";
-                return;
-            }
+            if (!voterName) { statusEl.textContent = "❌ Error: Voter not identified."; return; }
 
-            // Simple validation: check if all dropdowns have a value
             const selects = document.querySelectorAll('#voting-form select');
-            let allSelected = true;
-            selects.forEach(select => {
-                if (!select.value) {
-                    allSelected = false;
-                }
-            });
-
-            if (!allSelected) {
+            if (!Array.from(selects).every(select => select.value)) {
                 statusEl.textContent = "❌ Please make a selection for ALL candidates before submitting.";
                 return;
             }
@@ -324,9 +347,8 @@
                 return;
             }
             
-            statusEl.textContent = "Submitting vote to PyleaMUN Vote database, please wait...";
+            statusEl.textContent = "Submitting vote, please wait...";
 
-            // Collect the data
             const formData = new FormData(event.target);
             const votes = {};
             CANDIDATES.forEach((candidate, index) => {
@@ -336,7 +358,6 @@
                 };
             });
             
-            // Data to be saved in Firebase
             const voteData = {
                 timestamp: new Date().toISOString(),
                 voter: voterName,
@@ -344,39 +365,124 @@
             };
 
             try {
-                // Save the vote under the voter's name (key)
                 const voterRef = ref(database, `${VOTES_NODE}/${voterName}`);
-                await set(voterRef, voteData);
+                await set(voterRef, voteData); // Security rule: This will fail if the node exists!
 
-                // Clear session data and finalize
                 sessionStorage.removeItem(VOTER_SESSION_KEY);
                 
                 document.getElementById('voting-form').style.display = 'none';
                 statusEl.style.color = '#00897b';
                 statusEl.style.fontSize = '1.2em';
-                statusEl.innerHTML = `✅ **SUCCESS!** Thank you, ${voterName}, your vote has been recorded in the database. You can now close this page.`;
+                statusEl.innerHTML = `✅ **SUCCESS!** Thank you, ${voterName}, your vote has been recorded.`;
 
             } catch (error) {
-                statusEl.textContent = `❌ ERROR: Failed to submit vote. Please contact the administrator.`;
+                statusEl.textContent = `❌ ERROR: Failed to submit vote. (Check console)`;
                 console.error("Firebase Vote Submission Error:", error);
             }
         }
 
+        // ====================================================================
+        // --- 4. ADMIN TALLY LOGIC (Viewing Results) ---
+        // ====================================================================
 
-        // --- STARTUP ---
+        async function renderTally() {
+            const tallyStatusEl = document.getElementById('tally-status');
+            const tallySummaryEl = document.getElementById('tally-summary');
+            tallySummaryEl.innerHTML = '';
+            tallyStatusEl.textContent = "Fetching votes from database...";
+
+            try {
+                const votesRef = ref(database, VOTES_NODE);
+                const snapshot = await get(votesRef);
+
+                if (!snapshot.exists()) {
+                    tallyStatusEl.textContent = "No votes have been recorded yet.";
+                    return;
+                }
+
+                const allVotes = snapshot.val();
+                const totalVoters = Object.keys(allVotes).length;
+                
+                // Initialize Tally Structure: Committee -> Post -> Candidate -> Count
+                const results = {}; 
+                const candidateSet = new Set(CANDIDATES); // Use a set for quick lookup
+                
+                // 1. Process all submitted votes
+                for (const voterName in allVotes) {
+                    const voterVotes = allVotes[voterName].votes;
+                    
+                    for (const candidateName in voterVotes) {
+                        if (!candidateSet.has(candidateName)) continue; // Skip if candidate is unknown/malformed
+                        
+                        const { committee, post } = voterVotes[candidateName];
+
+                        // Initialize structure if needed
+                        if (!results[committee]) results[committee] = {};
+                        if (!results[committee][post]) results[committee][post] = {};
+                        if (!results[committee][post][candidateName]) results[committee][post][candidateName] = 0;
+                        
+                        // Increment count
+                        results[committee][post][candidateName]++;
+                    }
+                }
+                
+                // 2. Generate HTML Output
+                let html = '';
+                
+                const sortedCommittees = Object.keys(results).sort();
+
+                for (const committee of sortedCommittees) {
+                    html += `<div class="tally-committee">`;
+                    html += `<h3>${committee}</h3>`;
+                    
+                    const posts = results[committee];
+                    
+                    for (const post of POSTS) {
+                        const postResults = posts[post] || {};
+                        
+                        // Convert results to an array and sort by count (descending)
+                        const sortedCandidates = Object.entries(postResults)
+                            .sort(([, countA], [, countB]) => countB - countA);
+
+                        if (sortedCandidates.length > 0) {
+                            html += `<h4>${post} (${sortedCandidates.length} Candidates Received Votes)</h4>`;
+                            html += `<div class="tally-results">`;
+                            
+                            sortedCandidates.forEach(([candidate, count]) => {
+                                html += `<div class="tally-item">`;
+                                html += `<span class="candidate-name">${candidate}</span>`;
+                                html += `<span class="vote-count">${count}</span>`;
+                                html += `</div>`;
+                            });
+                            
+                            html += `</div>`;
+                        } else {
+                             html += `<h4>${post} (No votes recorded for this post yet)</h4>`;
+                        }
+                    }
+                    html += `</div>`; // Close tally-committee
+                }
+                
+                tallyStatusEl.innerHTML = `✅ Results loaded successfully! **${totalVoters}** total voters recorded.`;
+                tallySummaryEl.innerHTML = html;
+
+
+            } catch (error) {
+                tallyStatusEl.textContent = "❌ Failed to load results from Firebase. Check console.";
+                console.error("Tally Load Error:", error);
+            }
+        }
+        
+        // ====================================================================
+        // --- 5. INITIALIZATION ---
+        // ====================================================================
         document.addEventListener('DOMContentLoaded', () => {
             populateVoterSelect();
             document.getElementById('enter-btn').addEventListener('click', handleEnter);
             document.getElementById('voting-form').addEventListener('submit', handleSubmit);
             
-            // Check for existing session on page load
-            const storedVoter = sessionStorage.getItem(VOTER_SESSION_KEY);
-            if (storedVoter) {
-                // Pre-select the stored voter and re-run the check
-                document.getElementById('voter-select').value = storedVoter;
-                document.getElementById('enter-btn').disabled = false;
-                handleEnter(); 
-            }
+            // Check the URL query string to decide whether to show the voter or admin login
+            checkInitialView();
         });
 
     </script>
