@@ -146,18 +146,18 @@
         // ====================================================================
         
         const ADMIN_PASSWORD = "vote1026"; 
-        
-        // !!! SUPER ADMIN PASSWORD UPDATED !!!
         const SUPER_ADMIN_PASSWORD = "president-panos"; 
         
-        // Your web app's Firebase configuration (provided by user)
+        // Your web app's Firebase configuration (NOW WITH EXPLICIT databaseURL)
         const firebaseConfig = {
             apiKey: "AIzaSyBo2GRHsqz6LwvISHMiNa-eMaThNb1xwCs",
             authDomain: "pyleamun-vote.firebaseapp.com",
             projectId: "pyleamun-vote",
             storageBucket: "pyleamun-vote.firebasestorage.app",
             messagingSenderId: "251868969983",
-            appId: "1:251868969983:web:931ba1d87843eab7ccc5ca"
+            appId: "1:251868969983:web:931ba1d87843eab7ccc5ca",
+            // CORRECTED: Using the specific, regional Realtime Database URL
+            databaseURL: "https://pyleamun-vote-default-rtdb.europe-west1.firebasedatabase.app" 
         };
         
         // Database Constants
