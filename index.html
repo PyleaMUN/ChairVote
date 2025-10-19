@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyleaMUN Student Officer Vote</title>
+    <style>
+        /* Base styles from index.html */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #E8EAE6; color: #333; }
+        .hidden { display: none !important; }
+        .letterhead { display: flex; justify-content: space-between; align-items: center; background-color: #D6DBD2; border-bottom: 2px solid #444; padding: 10px 20px; min-height: 100px; flex-wrap: wrap; }
+        .address, .contact { width: 30%; font-size: 0.9rem; }
+        .contact { display: flex; flex-direction: column; align-items: flex-end; }
+        .logo-container { width: 120px; text-align: center; }
+        .logo { width: 120px; height: auto; }
+        .letterhead a { color: #0066cc; text-decoration: none; }
+        main { padding: 2em; max-width: 1000px; margin: auto; }
+        h1, h2 { text-align: center; color: #005b63; }
+        .container { background: #e0f7fa; padding: 2em; border-radius: 16px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        /* Button and Status styles */
+        .button-group { display: flex; justify-content: center; gap: 10px; margin: 1.5em 0; flex-wrap: wrap; }
+        .btn { background-color: #00b4a0; color: white; font-size: 1em; padding: 0.8em 1.5em; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
+        .btn:hover { background-color: #00897b; }
+        .btn.primary { background-color: #00b4a0; }
+        
+        /* Voting page specific styles */
+        #candidate-list { list-style: none; padding: 0; }
+        #candidate-list li { 
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 3 columns: Name, Committee, Post */
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #cceeff;
+        }
+        #candidate-list li:last-child { border-bottom: none; }
+        
+        .grid-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            font-weight: bold;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #005b63;
+        }
+        .grid-header div { text-align: center; }
+        .grid-header div:first-child { text-align: left; padding-left: 0; }
+
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: white;
+            font-size: 1em;
+            width: 90%;
+            box-sizing: border-box;
+        }
+        
+        .voter-auth {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+        }
+        
+        .alert-box {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #status { 
+            text-align: center; font-weight: bold; color: #004d40; margin-top: 1em; min-height: 24px; 
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Voter Authentication Screen -->
+    <div id="auth-screen">
+        <div class="letterhead">
+            <div class="address"><strong>4 Isminis Str.</strong><br>Pylaia, Thessaloniki - 55535</div>
+            <div class="logo-container"><img src="https://pyleamun.github.io/interview-guide/pyleaMUNfinallogo_transparent.png" alt="PyleaMUN Logo" class="logo"></div>
+            <div class="contact">
+                <div>📞 +30 2310329199</div>
+                <div>📧 <a href="mailto:pyleamun@gmail.com">pyleamun@gmail.com</a></div>
+                <div>🌐 <a href="https://pyleamun.github.io/pyleamun2026/" target="_blank">pyleamun.github.io/pyleamun2026</a></div>
+            </div>
+        </div>
+        <main>
+            <h1>🗳️ Student Officer Voting</h1>
+            <div class="container voter-auth">
+                <h2>Voter Identification</h2>
+                <div class="alert-box">⚠️ **IMPORTANT:** You can vote only once. Choose your name carefully!</div>
+                <label for="voter-select" style="font-size: 1.1em; font-weight: 600;">Select Your Name:</label>
+                <select id="voter-select">
+                    <option value="" disabled selected>-- Select your name --</option>
+                </select>
+                <button id="enter-btn" class="btn primary" disabled>Enter Voting Booth</button>
+                <div id="auth-status" style="color: #d32f2f;"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Main Voting Screen -->
+    <div id="voting-screen" class="hidden">
+        <div class="letterhead">
+            <div class="address"><strong>4 Isminis Str.</strong><br>Pylaia, Thessaloniki - 55535</div>
+            <div class="logo-container"><img src="https://pyleamun.github.io/interview-guide/pyleaMUNfinallogo_transparent.png" alt="PyleaMUN Logo" class="logo"></div>
+            <div class="contact">
+                <div>📞 +30 2310329199</div>
+                <div>📧 <a href="mailto:pyleamun@gmail.com">pyleamun@gmail.com</a></div>
+                <div>🌐 <a href="https://pyleamun.github.io/pyleamun2026/" target="_blank">pyleamun.github.io/pyleamun2026</a></div>
+            </div>
+        </div>
+        <main>
+            <h1>🗳️ PyleaMUN Student Officer Vote</h1>
+            <div class="container">
+                <p id="voter-greeting" style="text-align: center; font-size: 1.2em; color: #00796b;"></p>
+                <div class="alert-box">⚠️ **Final Reminder:** You can vote only once. Your vote is recorded once you click 'Submit Vote'.</div>
+
+                <form id="voting-form">
+                    <div class="grid-header">
+                        <div>Candidate Name</div>
+                        <div>Proposed Committee</div>
+                        <div>Proposed Post</div>
+                    </div>
+                    <ul id="candidate-list">
+                        <!-- Candidate rows will be populated by JavaScript -->
+                    </ul>
+                    <div class="button-group">
+                        <button type="submit" class="btn primary">Submit Vote</button>
+                    </div>
+                </form>
+
+                <div id="status"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modular Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, get, set, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBo2GRHsqz6LwvISHMiNa-eMaThNb1xwCs",
+            authDomain: "pyleamun-vote.firebaseapp.com",
+            projectId: "pyleamun-vote",
+            storageBucket: "pyleamun-vote.firebasestorage.app",
+            messagingSenderId: "251868969983",
+            appId: "1:251868969983:web:931ba1d87843eab7ccc5ca"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Reference to store the votes: voterName -> {timestamp, votes: {candidate: {committee, post}, ...}}
+        const VOTES_NODE = 'officer_votes';
+        const VOTER_SESSION_KEY = 'pyleamun-voter-id';
+
+
+        // --- DATA ---
+        const CANDIDATES = [
+            "Aidoni Rafaela", "Angelaki-Mertzemeki Sofia", "Anyparidou Despoina", 
+            "Asimakopoulou Ariadni", "Belliou Ioanna", "Bletsas Evangelos", 
+            "Della Puppa Anna Maria", "Kaimakamis Kostantinos", "Kalomoiropoulou Evelyn", 
+            "Karali Paraskevi", "Konstantou Panagiota", "Markadas Ioannis", 
+            "Marmorkos Kostantinos", "Mastrokosta Danai", "Mavromati Maria Eleonora", 
+            "Pachini Aikaterini", "Polymeri Kira", "Polymeri Stella", 
+            "Ramadanis Asterios", "Stoltidis Miltiadis", "Stoltidou Nikoleta", 
+            "Triantafyllou Angelos", "Tsitroudi Niki", "Zarogianni Ioanna"
+        ];
+        
+        const VOTERS = [
+            "Domvros", "Eskiktzis", "Goudas", "Kokkonos", "Liakou", 
+            "Loukas", "Moutropoulou", "Paidaraki", "Papadopoulos", 
+            "Papakrivos", "Pavlidis", "Saralekou", "Sougari", "Vasilikou"
+        ];
+
+        const COMMITTEES = [
+            "UN Environment Programme (UNEP)", "Security Council", 
+            "Economic and Social Council (ECOSOC)", "UNESCO", "NATO", 
+            "World Health Organisation (WHO)", "Human Rights Council (HRC)", 
+            "UN Women"
+        ];
+
+        const POSTS = ["Chair", "Co-Chair"];
+        
+
+        // --- AUTHENTICATION FUNCTIONS ---
+
+        function populateVoterSelect() {
+            const selectEl = document.getElementById('voter-select');
+            VOTERS.forEach(voter => {
+                const option = document.createElement('option');
+                option.value = voter;
+                option.textContent = voter;
+                selectEl.appendChild(option);
+            });
+
+            selectEl.addEventListener('change', () => {
+                document.getElementById('enter-btn').disabled = !selectEl.value;
+            });
+        }
+        
+        async function handleEnter() {
+            const voterName = document.getElementById('voter-select').value;
+            const authStatusEl = document.getElementById('auth-status');
+
+            if (!voterName) {
+                authStatusEl.textContent = "Please select your name to continue.";
+                return;
+            }
+            
+            authStatusEl.textContent = "Checking vote status in PyleaMUN Vote database...";
+
+            try {
+                // Check if the voter node exists in the database
+                const voterRef = ref(database, `${VOTES_NODE}/${voterName}`);
+                const snapshot = await get(voterRef);
+                
+                if (snapshot.exists()) {
+                    // Voter found in database, meaning they have already voted.
+                    authStatusEl.textContent = `❌ Error: The user "${voterName}" has already cast a vote on ${new Date(snapshot.val().timestamp).toLocaleString()}.`;
+                    return;
+                }
+
+                // Voter has not voted. Store voter's name and transition.
+                sessionStorage.setItem(VOTER_SESSION_KEY, voterName);
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('voting-screen').classList.remove('hidden');
+                document.getElementById('voter-greeting').textContent = `Welcome, ${voterName}. Please cast your votes for the Student Officers below.`;
+
+                populateCandidateList();
+            } catch (error) {
+                authStatusEl.textContent = `❌ Error connecting to the database. Please try again. (Check console for details)`;
+                console.error("Firebase Auth Check Error:", error);
+            }
+        }
+
+        // --- VOTING FORM FUNCTIONS ---
+        
+        function createDropdown(options, namePrefix, candidateIndex, initialText) {
+            const select = document.createElement('select');
+            select.name = `${namePrefix}_${candidateIndex}`;
+            select.required = true;
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = `-- ${initialText} --`;
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            select.appendChild(defaultOption);
+
+            options.forEach(optionText => {
+                const option = document.createElement('option');
+                option.value = optionText.trim();
+                option.textContent = optionText.trim();
+                select.appendChild(option);
+            });
+            return select;
+        }
+
+        function populateCandidateList() {
+            const listEl = document.getElementById('candidate-list');
+            listEl.innerHTML = ''; // Clear existing content
+
+            CANDIDATES.sort().forEach((candidate, index) => {
+                const li = document.createElement('li');
+                
+                // 1. Candidate Name
+                const nameDiv = document.createElement('div');
+                nameDiv.textContent = candidate;
+                li.appendChild(nameDiv);
+
+                // 2. Proposed Committee Dropdown
+                const committeeDiv = document.createElement('div');
+                const committeeSelect = createDropdown(COMMITTEES, 'committee', index, 'Select Committee');
+                committeeDiv.appendChild(committeeSelect);
+                li.appendChild(committeeDiv);
+
+                // 3. Proposed Post Dropdown
+                const postDiv = document.createElement('div');
+                const postSelect = createDropdown(POSTS, 'post', index, 'Select Post');
+                postDiv.appendChild(postSelect);
+                li.appendChild(postDiv);
+
+                listEl.appendChild(li);
+            });
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const statusEl = document.getElementById('status');
+            const voterName = sessionStorage.getItem(VOTER_SESSION_KEY);
+
+            if (!voterName) {
+                statusEl.textContent = "❌ Error: Voter not identified. Please refresh and re-enter.";
+                return;
+            }
+
+            // Simple validation: check if all dropdowns have a value
+            const selects = document.querySelectorAll('#voting-form select');
+            let allSelected = true;
+            selects.forEach(select => {
+                if (!select.value) {
+                    allSelected = false;
+                }
+            });
+
+            if (!allSelected) {
+                statusEl.textContent = "❌ Please make a selection for ALL candidates before submitting.";
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to submit your vote, ${voterName}? This action is final.`)) {
+                return;
+            }
+            
+            statusEl.textContent = "Submitting vote to PyleaMUN Vote database, please wait...";
+
+            // Collect the data
+            const formData = new FormData(event.target);
+            const votes = {};
+            CANDIDATES.forEach((candidate, index) => {
+                votes[candidate] = {
+                    committee: formData.get(`committee_${index}`),
+                    post: formData.get(`post_${index}`)
+                };
+            });
+            
+            // Data to be saved in Firebase
+            const voteData = {
+                timestamp: new Date().toISOString(),
+                voter: voterName,
+                votes: votes
+            };
+
+            try {
+                // Save the vote under the voter's name (key)
+                const voterRef = ref(database, `${VOTES_NODE}/${voterName}`);
+                await set(voterRef, voteData);
+
+                // Clear session data and finalize
+                sessionStorage.removeItem(VOTER_SESSION_KEY);
+                
+                document.getElementById('voting-form').style.display = 'none';
+                statusEl.style.color = '#00897b';
+                statusEl.style.fontSize = '1.2em';
+                statusEl.innerHTML = `✅ **SUCCESS!** Thank you, ${voterName}, your vote has been recorded in the database. You can now close this page.`;
+
+            } catch (error) {
+                statusEl.textContent = `❌ ERROR: Failed to submit vote. Please contact the administrator.`;
+                console.error("Firebase Vote Submission Error:", error);
+            }
+        }
+
+
+        // --- STARTUP ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateVoterSelect();
+            document.getElementById('enter-btn').addEventListener('click', handleEnter);
+            document.getElementById('voting-form').addEventListener('submit', handleSubmit);
+            
+            // Check for existing session on page load
+            const storedVoter = sessionStorage.getItem(VOTER_SESSION_KEY);
+            if (storedVoter) {
+                // Pre-select the stored voter and re-run the check
+                document.getElementById('voter-select').value = storedVoter;
+                document.getElementById('enter-btn').disabled = false;
+                handleEnter(); 
+            }
+        });
+
+    </script>
+</body>
+</html>
